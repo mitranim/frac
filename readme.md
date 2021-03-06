@@ -8,8 +8,8 @@ For example:
 "123"     <- frac 2, radix 10 -> 123_00
 "123.45"  <- frac 2, radix 10 -> 123_45
 "123.456" <- frac 2, radix 10 -> <error>
-"123"     <- frac 2, radix 10 -> 123_000
-"123.456" <- frac 2, radix 10 -> 123_456
+"123"     <- frac 3, radix 10 -> 123_000
+"123.456" <- frac 3, radix 10 -> 123_456
 ```
 
 Performance on 64-bit machines is comparable to `strconv` and shouldn't be your bottleneck.
@@ -44,7 +44,7 @@ func main() {
 
   // Exponent exceeds allotted precision. Conversion is impossible.
   num, err = frac.ParseDec(`-123.456`, 2)
-  assert(err != nil)
+  assert(err != nil && num == 0)
 }
 
 func assert(ok bool) {if !ok {panic("unreachable")}}
