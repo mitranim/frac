@@ -79,7 +79,7 @@ The resulting type `Cents` is an integer, but when decoding and encoding text, i
 
 * No special support for unsigned integers.
 
-* Formatting limits `frac` to `sizeof(int64) * 8`. (Imagine allocating gigabytes of memory for `0.0...01`.)
+* When formatting, fractional precision is limited to `64`. (Imagine allocating gigabytes of memory for `0.0...01`.)
 
 ## License
 
