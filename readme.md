@@ -1,18 +1,21 @@
 ## Overview
 
-Missing feature of the Go standard library: parsing and formatting integers as fractional numeric strings, without any rounding or bignums, by using a fixed fraction size. Supports arbitrary radixes from 2 to 36.
+Missing feature of the Go standard library: parsing and formatting `int64` as a fractional numeric string, _without any rounding or bignums_, by using a fixed fraction size. Supports arbitrary radixes from 2 to 36.
 
 For example:
 
 ```
 "123"     <- frac 2, radix 10 -> 123_00
-"123.45"  <- frac 2, radix 10 -> 123_45
-"123.456" <- frac 2, radix 10 -> <error>
 "123"     <- frac 3, radix 10 -> 123_000
+
+"123.45"  <- frac 2, radix 10 -> 123_45
+"123.45"  <- frac 3, radix 10 -> 123_450
+
+"123.456" <- frac 2, radix 10 -> <error>
 "123.456" <- frac 3, radix 10 -> 123_456
 ```
 
-Performance on 64-bit machines is comparable to `strconv` and shouldn't be your bottleneck.
+Performance on 64-bit machines is somewhat comparable to `strconv` and shouldn't be your bottleneck.
 
 See API docs at https://pkg.go.dev/github.com/mitranim/frac.
 

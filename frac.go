@@ -45,11 +45,11 @@ See `readme.md` for examples.
 */
 func Parse(src string, frac uint, radix uint) (num int64, err error) {
 	if len(src) == 0 {
-		return 0, fmt.Errorf(`can't parse empty input as number`)
+		return 0, fmt.Errorf(`unable to parse empty input as number`)
 	}
 
-	if !(radix >= 2 && radix <= 36) {
-		return 0, fmt.Errorf(`can't parse %q as number: unsupported radix %v`, src, radix)
+	if !(radix >= radixMin && radix <= radixMax) {
+		return 0, fmt.Errorf(`unable to parse %q as number: unsupported radix %v`, src, radix)
 	}
 
 	var sign int64 = 1
@@ -64,7 +64,7 @@ func Parse(src string, frac uint, radix uint) (num int64, err error) {
 	)
 	step := stepSign
 
-	for i, char := range []byte(src) {
+	for ind, char := range []byte(src) {
 		if step == stepSign {
 			if char == '+' {
 				step = stepMantStart
@@ -93,8 +93,10 @@ func Parse(src string, frac uint, radix uint) (num int64, err error) {
 
 		digit := toDigit(char)
 		if digit == unDigit || uint(digit) >= radix {
-			return 0, fmt.Errorf(`can't parse %q as number (radix %v, fraction %v): found non-digit character %q`,
-				src, radix, frac, runeAt(src, i))
+			return 0, fmt.Errorf(
+				`unable to parse %q as number (radix %v, fraction %v): found non-digit character %q`,
+				src, radix, frac, runeAt(src, ind),
+			)
 		}
 
 		if step == stepExp {
@@ -103,8 +105,10 @@ func Parse(src string, frac uint, radix uint) (num int64, err error) {
 				if digit == 0 {
 					continue
 				}
-				return 0, fmt.Errorf(`can't parse %q as number (radix %v, fraction %v): exponent exceeds allotted fractional precision`,
-					src, radix, frac)
+				return 0, fmt.Errorf(
+					`unable to parse %q as number (radix %v, fraction %v): exponent exceeds allotted fractional precision`,
+					src, radix, frac,
+				)
 			}
 		}
 
@@ -128,8 +132,10 @@ func Parse(src string, frac uint, radix uint) (num int64, err error) {
 	}
 
 	if step != stepMant && step != stepExp {
-		return 0, fmt.Errorf(`can't parse %q as number (radix %v, fraction %v): unexpected end of input`,
-			src, radix, frac)
+		return 0, fmt.Errorf(
+			`unable to parse %q as number (radix %v, fraction %v): unexpected end of input`,
+			src, radix, frac,
+		)
 	}
 	return num, nil
 }
@@ -217,18 +223,17 @@ returning the resulting union. When there's an error, the buffer is returned
 as-is with no hidden modifications.
 */
 func Append(buf []byte, num int64, frac uint, radix uint) ([]byte, error) {
-	if !(radix >= 2 && radix <= 36) {
-		return buf, fmt.Errorf(`can't format %v: unsupported radix %v`, num, radix)
+	if !(radix >= radixMin && radix <= radixMax) {
+		return buf, fmt.Errorf(`unable to format %v: unsupported radix %v`, num, radix)
 	}
 
 	const bits = unsafe.Sizeof(num) * 8
 	if frac > uint(bits) {
-		return buf, fmt.Errorf(`can't format %v: fractional precision %v exceeds limit %v`, num, frac, bits)
+		return buf, fmt.Errorf(`unable to format %v: fractional precision %v exceeds limit %v`, num, frac, bits)
 	}
 
-	// 3 bytes are for leading "-0.".
-	var local [bits + 3]byte
-	i := len(local)
+	var local [int(bits) + len(`-0.`)]byte
+	ind := len(local)
 
 	var neg bool
 	var unum uint64
@@ -252,41 +257,45 @@ func Append(buf []byte, num int64, frac uint, radix uint) ([]byte, error) {
 		}
 		trailing = false
 
-		i--
-		local[i] = digits[digit]
+		ind--
+		local[ind] = digits[digit]
 
 		if frac == 0 {
-			i--
-			local[i] = '.'
+			ind--
+			local[ind] = '.'
 		}
 	}
 
 	for unum >= rad {
 		unum, digit = pop(unum, rad)
-		i--
-		local[i] = digits[digit]
+		ind--
+		local[ind] = digits[digit]
 	}
 
-	i--
-	local[i] = digits[unum]
+	ind--
+	local[ind] = digits[unum]
 
 	if neg {
-		i--
-		local[i] = '-'
+		ind--
+		local[ind] = '-'
 	}
 
-	return append(buf, local[i:]...), nil
+	return append(buf, local[ind:]...), nil
 }
 
-const digits = `0123456789abcdefghijklmnopqrstuvwxyz`
+const (
+	digits   = `0123456789abcdefghijklmnopqrstuvwxyz`
+	radixMin = uint(2)
+	radixMax = uint(len(digits))
+)
 
 func inc(src string, prev int64, radix uint, sign int64, digit byte) (int64, error) {
 	next := prev*int64(radix) + sign*int64(digit)
 	if prev > 0 && next < prev {
-		return 0, fmt.Errorf(`can't parse %q as number: overflow of %T`, src, next)
+		return 0, fmt.Errorf(`unable to parse %q as number: overflow of %T`, src, next)
 	}
 	if prev < 0 && next > prev {
-		return 0, fmt.Errorf(`can't parse %q as number: underflow of %T`, src, next)
+		return 0, fmt.Errorf(`unable to parse %q as number: underflow of %T`, src, next)
 	}
 	return next, nil
 }
@@ -309,8 +318,8 @@ func lower(char byte) byte {
 }
 
 func runeAt(str string, index int) rune {
-	for i, char := range str {
-		if i == index {
+	for ind, char := range str {
+		if ind == index {
 			return char
 		}
 	}

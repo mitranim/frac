@@ -91,7 +91,7 @@ func TestParseRadix(*testing.T) {
 	const frac = 0
 	const val = 1
 
-	for radix := uint(2); radix < 36; radix++ {
+	for radix := uint(radixMin); radix < radixMax; radix++ {
 		testParse(`1`, frac, radix, val)
 	}
 
@@ -214,7 +214,7 @@ func TestFormatRadix(*testing.T) {
 	const frac = 0
 	const val = 1
 
-	for radix := uint(2); radix < 36; radix++ {
+	for radix := uint(2); radix < radixMax; radix++ {
 		testFormat(val, frac, radix, `1`)
 	}
 
